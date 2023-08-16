@@ -9,7 +9,7 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
   // password: 'gyovS8eeXXHeHW4c3dzpJqTcCUCFtsY8',
   // database: 'foodmanagement',
   entities: [__dirname + '/../libs/entities/*.entity{.ts,.js}'],
-  synchronize: false,
+  synchronize: true,
   migrations: [__dirname + '/../libs/migrations/**/*.ts'],
   subscribers: [__dirname + '/../libs/subcribers/**/*.ts'],
   ssl: true, // Enable SSL
