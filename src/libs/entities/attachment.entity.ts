@@ -4,6 +4,7 @@ import {
   Column,
   JoinColumn,
   OneToOne,
+  ManyToOne,
 } from 'typeorm';
 import { Category } from './category.entity';
 import { Product } from './product.entity';
@@ -24,10 +25,10 @@ export class Attachment {
   categoryParent: Category;
 
   @OneToOne(() => Product, (product) => product.image, { nullable: true })
-  @JoinColumn({ name: 'productId' })
+  @JoinColumn()
   productImage: Category;
 
-  @OneToOne(() => Product, (product) => product.gallery, { nullable: true })
-  @JoinColumn({ name: 'productId' })
+  @ManyToOne(() => Product, (product) => product.gallery, { nullable: true })
+  @JoinColumn()
   productGallery: Product;
 }

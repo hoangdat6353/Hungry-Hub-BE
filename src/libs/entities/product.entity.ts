@@ -17,7 +17,6 @@ import { Order } from './order.entity';
 
 @Entity()
 export class Product extends BaseEntity {
-  @Index()
   @Column()
   name: string;
 
