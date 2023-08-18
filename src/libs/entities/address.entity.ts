@@ -1,15 +1,5 @@
-import {
-  Column,
-  Entity,
-  Index,
-  Unique,
-  OneToMany,
-  ManyToOne,
-  OneToOne,
-  Double,
-  JoinColumn,
-} from 'typeorm';
-import { AuditableEntity, BaseEntity } from './base.entity';
+import { Column, Entity, Index, ManyToOne, JoinColumn } from 'typeorm';
+import { BaseEntity } from './base.entity';
 import { User } from './user.entity';
 
 @Entity()
@@ -25,6 +15,6 @@ export class Address extends BaseEntity {
   formattedAddress: string;
 
   @ManyToOne(() => User, (user) => user.contacts)
-  @JoinColumn({ name: 'userId' }) // Specify the foreign key column
+  @JoinColumn({ name: 'userId' })
   user: User;
 }
