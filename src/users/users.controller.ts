@@ -118,4 +118,11 @@ export class UserController {
   ): Promise<BaseResponse<BaseStatusResponse>> {
     return await this.userService.changePassword(ChangePasswordRequest, id);
   }
+
+  @Post('forgot-password')
+  public async forgotPassword(
+    @Body('email') email: string,
+  ): Promise<BaseResponse<BaseStatusResponse>> {
+    return await this.userService.forgotPassword(email);
+  }
 }

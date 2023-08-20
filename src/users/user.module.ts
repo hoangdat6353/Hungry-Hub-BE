@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { Contact } from 'src/libs/entities/contact.entity';
 import { Address } from 'src/libs/entities/address.entity';
+import { SendgridModule } from 'src/sendgrid/sendgrid.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Address } from 'src/libs/entities/address.entity';
         expiresIn: '18000',
       },
     }),
+    SendgridModule
   ],
   controllers: [UserController],
   providers: [UsersService],

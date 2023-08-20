@@ -23,6 +23,8 @@ import { BaseResponse } from 'src/libs/entities/base.entity';
 import { JwtService } from '@nestjs/jwt';
 import { Address } from 'src/libs/entities/address.entity';
 import { Contact } from 'src/libs/entities/contact.entity';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { SendgridService } from 'src/sendgrid/sendgrid.service';
 
 @Injectable()
 export class UsersService {
@@ -34,6 +36,7 @@ export class UsersService {
     @InjectRepository(Address)
     private readonly addressRepository: Repository<Address>,
     private readonly jwtService: JwtService,
+    private readonly sendgridService: SendgridService,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -223,6 +226,61 @@ export class UsersService {
         'UPDATE PASSWORD FAILED ! SERVER ERROR',
       );
     }
+  }
+
+  async forgotPassword(
+    email: string,
+  ): Promise<BaseResponse<BaseStatusResponse>> {
+    const user = await this.userRepository.findOne({ where: { email } });
+
+    if (!user) {
+      throw new NotFoundException('EMAIL NOT FOUND');
+    }
+
+    const randomPassword = this.generateRandomId(16);
+
+    // Send Email
+    try {
+      const mailToSend = {
+        to: email, // Change to your recipient
+        from: 'nguyentrungthoi7601@gmail.com', // Change to your verified sender
+        subject: 'New Password for Hungry',
+        html: `<strong>Here is your new password, remember to change it: <b>${randomPassword}</b></strong>`,
+      };
+      await this.sendgridService.sendMail(mailToSend);
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException('SEND EMAIL FAIL, TRY AGAIN');
+    }
+
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+    try {
+      user.passwordHash = hashedPassword;
+      await this.userRepository.save(user);
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException(
+        'CHANGE PASSWORD FAILED, TRY AGAIN',
+      );
+    }
+
+    return new BaseResponse<BaseStatusResponse>({
+      isSuccess: true,
+    } as BaseStatusResponse);
+  }
+
+  generateRandomId(length) {
+    const charset =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+';
+    let randomId = '';
+
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * charset.length);
+      randomId += charset[randomIndex];
+    }
+
+    return randomId;
   }
 
   async register(
