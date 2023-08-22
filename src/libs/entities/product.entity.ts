@@ -59,12 +59,6 @@ export class Product extends BaseEntity {
   @OneToOne(() => Attachment, (image) => image.productImage, { nullable: true })
   image: Attachment;
 
-  @OneToMany(() => Attachment, (galleryImage) => galleryImage.productGallery, {
-    nullable: true,
-  })
-  @JoinColumn({ name: 'galleryId' })
-  gallery: Attachment[];
-
   @ManyToOne(() => Category, (category) => category.products, {
     nullable: true,
   })

@@ -7,7 +7,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, In, Repository } from 'typeorm';
+import { ILike, In, Not, Repository } from 'typeorm';
 import { BaseResponse } from 'src/libs/entities/base.entity';
 import { Product } from 'src/libs/entities/product.entity';
 import {
@@ -18,6 +18,7 @@ import {
 import { User } from 'src/libs/entities/user.entity';
 import { Order } from 'src/libs/entities/order.entity';
 import { Status } from 'src/libs/entities/status.entity';
+import { isUUID } from 'class-validator';
 
 @Injectable()
 export class ProductService {
@@ -37,7 +38,7 @@ export class ProductService {
       where: {
         isBestSeller: true,
       },
-      relations: ['gallery', 'image', 'category', 'tags'],
+      relations: ['image', 'category', 'tags'],
     });
 
     return products;
@@ -48,7 +49,7 @@ export class ProductService {
       where: {
         isPopular: true,
       },
-      relations: ['gallery', 'image', 'category', 'tags'],
+      relations: ['image', 'category', 'tags'],
     });
 
     return products;
@@ -156,27 +157,63 @@ export class ProductService {
   }
 
   async findAllRelatedProducts(productId: string): Promise<Product[]> {
-    const product = await this.productRepository.findOne({
-      where: {
-        id: productId,
-      },
-      relations: ['tags'],
-    });
+    let product: Product | undefined;
+
+    if (isUUID(productId)) {
+      // If the input is a valid UUID, look up by ID
+      product = await this.productRepository.findOne({
+        where: {
+          id: productId,
+        },
+        relations: ['tags'],
+      });
+    } else {
+      // If the input is not a valid UUID, look up by slug
+      product = await this.productRepository.findOne({
+        where: {
+          slug: productId,
+        },
+        relations: ['tags'],
+      });
+    }
 
     if (!product) {
       throw new Error(`Product with ID ${productId} not found`);
     }
 
-    const relatedProducts = await this.productRepository
+    const tagIds = product.tags.map((tag) => tag.id);
+
+    const relatedProductIds = await this.productRepository
       .createQueryBuilder('product')
-      .leftJoinAndSelect('product.tags', 'tag')
-      .where('tag.id IN (:...tagIds)', {
-        tagIds: product.tags.map((tag) => tag.id),
-      })
-      .andWhere('product.id != :productId', { productId })
+      .select('product.id')
+      .leftJoin('product.tags', 'tag')
+      .whereInIds(tagIds)
+      .andWhere('product.id != :productId', { productId: product.id })
       .getMany();
 
+    const relatedProducts = await this.productRepository.find({
+      where: {
+        id: In(relatedProductIds.map((p) => p.id)), // Use the retrieved IDs
+      },
+      relations: ['tags'],
+    });
+
     return relatedProducts;
+  }
+
+  async findProductDetails(productSlug: string): Promise<Product> {
+    const product = await this.productRepository.findOne({
+      where: {
+        slug: productSlug,
+      },
+      relations: ['image', 'category', 'tags'],
+    });
+
+    if (!product) {
+      throw new Error(`Product with slug ${productSlug} not found`);
+    }
+
+    return product;
   }
 
   async searchProducts(

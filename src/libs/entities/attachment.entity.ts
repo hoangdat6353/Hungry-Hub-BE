@@ -28,7 +28,7 @@ export class Attachment {
   @JoinColumn()
   productImage: Category;
 
-  @ManyToOne(() => Product, (product) => product.gallery, { nullable: true })
-  @JoinColumn()
-  productGallery: Product;
+  // @ManyToOne(() => Product, (product) => product.gallery, { nullable: true })
+  // @JoinColumn()
+  // productGallery: Product;
 }

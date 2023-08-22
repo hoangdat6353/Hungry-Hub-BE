@@ -210,7 +210,7 @@ export class UsersService {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         user.passwordHash = hashedPassword;
 
-        await this.userRepository.update(user.id, user);
+        await this.userRepository.save(user);
 
         const isSuccess = true;
         return new BaseResponse<BaseStatusResponse>({
@@ -222,6 +222,7 @@ export class UsersService {
         );
       }
     } catch (error) {
+      console.log('ERROR HERE', error);
       throw new InternalServerErrorException(
         'UPDATE PASSWORD FAILED ! SERVER ERROR',
       );
@@ -243,7 +244,7 @@ export class UsersService {
     try {
       const mailToSend = {
         to: email, // Change to your recipient
-        from: 'nguyentrungthoi7601@gmail.com', // Change to your verified sender
+        from: 'hungryhub.food@gmail.com', // Change to your verified sender
         subject: 'New Password for Hungry',
         html: `<strong>Here is your new password, remember to change it: <b>${randomPassword}</b></strong>`,
       };

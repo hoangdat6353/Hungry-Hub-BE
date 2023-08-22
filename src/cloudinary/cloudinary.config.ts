@@ -9,8 +9,8 @@ export class CloudinaryConfig {
   apiSecret: string;
 
   constructor() {
-    this.cloudName = 'dkg19mmtc';
-    this.apiKey = '618151926973987';
-    this.apiSecret = 'e795UF33fzX7nowoDdl7eDA9LM8';
+    this.cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    this.apiKey = process.env.CLOUDINARY_API_KEY;
+    this.apiSecret = process.env.CLOUDINARY_API_SECRET;
   }
 }

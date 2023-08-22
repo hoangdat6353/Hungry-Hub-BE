@@ -5,7 +5,7 @@ import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { CloudinaryConfig } from './cloudinary.config';
 import { Express } from 'multer';
 import { CloudinaryResponse } from './cloudinary-response';
-const streamifier = require('streamifier');
+import * as streamifier from 'streamifier';
 
 @Injectable()
 export class CloudinaryService {

@@ -46,7 +46,7 @@ export interface ResponseProductModel {
   name: string;
   slug: string;
   image: Attachment;
-  gallery: Attachment[];
+  //gallery: Attachment[];
   description: string;
   price: number;
   quantity: number;

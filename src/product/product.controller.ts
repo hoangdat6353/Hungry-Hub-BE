@@ -35,7 +35,7 @@ export class ProductController {
       name: product.name,
       slug: product.slug,
       image: product.image,
-      gallery: product.gallery,
+      //gallery: product.gallery,
       description: product.description,
       price: product.price,
       quantity: product.quantity,
@@ -61,7 +61,7 @@ export class ProductController {
         name: product.name,
         slug: product.slug,
         image: product.image,
-        gallery: product.gallery,
+        //gallery: product.gallery,
         description: product.description,
         price: product.price,
         quantity: product.quantity,
@@ -140,7 +140,7 @@ export class ProductController {
         name: product.name,
         slug: product.slug,
         image: product.image,
-        gallery: product.gallery,
+        //gallery: product.gallery,
         description: product.description,
         price: product.price,
         quantity: product.quantity,
@@ -152,6 +152,32 @@ export class ProductController {
         tags: product.tags,
       }),
     );
+
+    return new BaseResponse(transformedProduct, HttpStatusCode.SUCCESS);
+  }
+
+  @Get(':slug/')
+  async findProductDetails(
+    @Param('slug') slug: string,
+  ): Promise<BaseResponse<ResponseProductModel>> {
+    const product = await this.productService.findProductDetails(slug);
+
+    // Transform the products into the desired response format
+    const transformedProduct: ResponseProductModel = {
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      image: product.image,
+      description: product.description,
+      price: product.price,
+      quantity: product.quantity,
+      sold: product.sold,
+      salePrice: product.salePrice,
+      sku: product.sku,
+      category: product?.category,
+      unit: product.unit,
+      tags: product.tags,
+    };
 
     return new BaseResponse(transformedProduct, HttpStatusCode.SUCCESS);
   }
@@ -171,7 +197,7 @@ export class ProductController {
       name: product.name,
       slug: product.slug,
       image: product.image,
-      gallery: product.gallery,
+      //gallery: product.gallery,
       description: product.description,
       price: product.price,
       quantity: product.quantity,

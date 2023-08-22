@@ -9,7 +9,6 @@ export class SendgridService {
   }
 
   async sendMail(mail: SendGrid.MailDataRequired) {
-
     const transport = await SendGrid.send(mail);
     // avoid this on production. use log instead :)
     console.log(`E-Mail sent to ${mail.to}`);
