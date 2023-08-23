@@ -29,8 +29,10 @@ export class UserController {
   constructor(private readonly userService: UsersService) {}
 
   @Get()
-  async findAll(): Promise<User[]> {
-    return this.userService.findAll();
+  async findAll(): Promise<BaseResponse<User[]>> {
+    const users = await this.userService.findAll();
+
+    return new BaseResponse(users, HttpStatusCode.SUCCESS);
   }
 
   //Find user by ID

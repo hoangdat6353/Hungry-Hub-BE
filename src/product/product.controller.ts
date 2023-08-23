@@ -156,7 +156,7 @@ export class ProductController {
     return new BaseResponse(transformedProduct, HttpStatusCode.SUCCESS);
   }
 
-  @Get(':slug/')
+  @Get(':slug/details')
   async findProductDetails(
     @Param('slug') slug: string,
   ): Promise<BaseResponse<ResponseProductModel>> {
