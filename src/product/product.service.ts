@@ -232,9 +232,7 @@ export class ProductService {
     queryBuilder
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect('product.tags', 'tag')
-      .leftJoinAndSelect('product.image', 'image')
-      .leftJoinAndSelect('product.gallery', 'gallery');
-
+      .leftJoinAndSelect('product.image', 'image');
     if (query) {
       const keywords = query.split(',');
       const categoryConditions = keywords.map((keyword) => {

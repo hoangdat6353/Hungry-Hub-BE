@@ -48,8 +48,8 @@ export class User extends AuditableEntity {
   @Column({ default: 0 })
   balance: number;
 
-  @Column({ default: 'Active' })
-  status: string;
+  @Column({ default: true })
+  status: boolean;
 
   @Exclude()
   @Column({ name: 'reset_password_token', nullable: true })
