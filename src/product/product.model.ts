@@ -46,13 +46,12 @@ export interface ResponseProductModel {
   name: string;
   slug: string;
   image: Attachment;
-  //gallery: Attachment[];
   description: string;
   price: number;
   quantity: number;
   sold: number;
   salePrice: number;
-  sku: string;
+  sku?: string;
   category: Category;
   unit: string;
   tags: Tag[];

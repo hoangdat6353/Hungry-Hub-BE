@@ -40,6 +40,7 @@ export class CategoryController {
       image: category.image,
       icon: category.icon,
       children: category.children,
+      numberOfProducts: category.products.length,
     }));
 
     return new BaseResponse(transformedCategories, HttpStatusCode.SUCCESS);

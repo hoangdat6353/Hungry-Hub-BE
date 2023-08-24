@@ -267,4 +267,12 @@ export class ProductService {
 
     return { data, paginatorInfo, total, totalPages };
   }
+
+  async getAllProducts(): Promise<Product[]> {
+    const products = await this.productRepository.find({
+      relations: ['category', 'tags', 'image'],
+    });
+
+    return products;
+  }
 }

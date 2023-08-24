@@ -23,7 +23,7 @@ export class CategoryService {
 
   async findAll(): Promise<Category[]> {
     const categories = await this.categoryRepository.find({
-      relations: ['children', 'image', 'parent'],
+      relations: ['children', 'image', 'parent', 'products'],
     });
 
     return categories;

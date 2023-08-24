@@ -230,4 +230,29 @@ export class ProductController {
       HttpStatusCode.SUCCESS,
     );
   }
+
+  @Get('all')
+  async getAllProducts(): Promise<BaseResponse<ResponseProductModel[]>> {
+    const products = await this.productService.getAllProducts();
+
+    const transformedProducts: ResponseProductModel[] = products.map(
+      (product) => ({
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        image: product.image,
+        description: product.description,
+        price: product.price,
+        quantity: product.quantity,
+        sold: product.sold,
+        salePrice: product.salePrice,
+        category: product?.category,
+        unit: product.unit,
+        tags: product.tags,
+        isBestSeller: product.isBestSeller,
+        isPopular: product.isPopular,
+      }),
+    );
+    return new BaseResponse(transformedProducts, HttpStatusCode.SUCCESS);
+  }
 }
