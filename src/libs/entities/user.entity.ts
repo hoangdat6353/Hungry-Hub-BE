@@ -6,12 +6,12 @@ import { Contact } from './contact.entity';
 import { Order } from './order.entity';
 
 export enum Role {
-  sysadmin = 'sysadmin',
   admin = 'admin',
+  employee = 'employee',
   user = 'user',
 }
 
-export const ADMINISTRATOR_ROLES = [Role.sysadmin, Role.admin];
+export const ADMINISTRATOR_ROLES = [Role.admin, Role.employee];
 
 @Entity()
 @Unique(['username'])
@@ -41,6 +41,15 @@ export class User extends AuditableEntity {
 
   @Column({ name: 'date_of_birth', nullable: true })
   dateOfBirth: string;
+
+  @Column({ name: 'date_hired', nullable: true })
+  dateHired: string;
+
+  @Column({ name: 'national_id', nullable: true })
+  nationalID: string;
+
+  @Column({ nullable: true })
+  position: string;
 
   @Column({ nullable: true })
   avatar: string;

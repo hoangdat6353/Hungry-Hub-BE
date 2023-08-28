@@ -23,7 +23,7 @@ export class Category extends BaseEntity {
   @Column({ nullable: true })
   icon: string;
 
-  @OneToOne(() => Attachment, (image) => image.categoryParent, {
+  @OneToOne(() => Attachment, (image) => image.categoryImage, {
     nullable: true,
   })
   image: Attachment;

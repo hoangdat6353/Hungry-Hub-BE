@@ -56,7 +56,10 @@ export class Product extends BaseEntity {
   @Column({ name: 'is_popular', default: false })
   isPopular: boolean;
 
-  @OneToOne(() => Attachment, (image) => image.productImage, { nullable: true })
+  @OneToOne(() => Attachment, (image) => image.productImage, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
   image: Attachment;
 
   @ManyToOne(() => Category, (category) => category.products, {
@@ -67,6 +70,7 @@ export class Product extends BaseEntity {
 
   @ManyToMany(() => Tag, (tag) => tag.products, {
     nullable: true,
+    onDelete: 'CASCADE',
   })
   @JoinTable({ name: 'products_tags' })
   tags: Tag[];

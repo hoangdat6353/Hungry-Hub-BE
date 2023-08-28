@@ -7,6 +7,8 @@ import {
   Param,
   Put,
   Query,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import {
   BasePaginationResponse,
@@ -17,9 +19,17 @@ import { ProductService } from './product.service';
 import {
   CreateOrderRequest,
   CreateOrderResponse,
+  CreateProductRequest,
+  CreateProductResponse,
   ResponseProductModel,
+  UpdateProductRequest,
+  UpdateProductResponse,
+  UpdateProductStatusRequest,
 } from './product.model';
 import { Product } from 'src/libs/entities/product.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Express } from 'multer';
+import { BaseStatusResponse } from 'src/users/user.model';
 
 @Controller('products')
 export class ProductController {
@@ -109,6 +119,36 @@ export class ProductController {
     return new BaseResponse(transformedOrders, HttpStatusCode.SUCCESS);
   }
 
+  @Get('orders')
+  async getAllOrders(): Promise<BaseResponse<any[]>> {
+    const orders = await this.productService.findAllOrders();
+
+    // Transform orders data and return the response
+    const transformedOrders = orders.map((order) => ({
+      id: order.id,
+      tracking_number: order.tracking_number,
+      amount: order.total - order.discount,
+      total: order.total,
+      delivery_fee: order.shippingFee,
+      discount: order.discount,
+      status: order.status,
+      delivery_time: order.deliveryTime,
+      created_at: order.createdAt,
+      products: order.products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        quantity: product.quantity,
+        price: product.price,
+        image: product.image,
+      })),
+      shipping_address: {
+        shipping_address: order.shippingAddress,
+      },
+    }));
+
+    return new BaseResponse(transformedOrders, HttpStatusCode.SUCCESS);
+  }
+
   @Get('status')
   async getAllStatus(): Promise<BaseResponse<any[]>> {
     const status = await this.productService.findAllStatus();
@@ -125,6 +165,63 @@ export class ProductController {
     );
 
     return new BaseResponse(responseData, HttpStatusCode.SUCCESS);
+  }
+
+  @Post()
+  async createProduct(
+    @Body() createProductRequest: CreateProductRequest,
+  ): Promise<BaseResponse<CreateProductResponse>> {
+    const responseData = await this.productService.createProduct(
+      createProductRequest,
+    );
+
+    return new BaseResponse(responseData, HttpStatusCode.SUCCESS);
+  }
+
+  @Put()
+  async updateProduct(
+    @Body() updateProductRequest: UpdateProductRequest,
+  ): Promise<BaseResponse<UpdateProductResponse>> {
+    const responseData = await this.productService.updateProduct(
+      updateProductRequest,
+    );
+
+    return new BaseResponse(responseData, HttpStatusCode.SUCCESS);
+  }
+
+  @Delete(':id')
+  async deleteProduct(
+    @Param('id') id: string,
+  ): Promise<BaseResponse<BaseStatusResponse>> {
+    const responseData = await this.productService.deleteProduct(id);
+
+    return new BaseResponse(responseData, HttpStatusCode.SUCCESS);
+  }
+
+  @Put('product-status')
+  async updateProductStatus(
+    @Body() updateProductRequest: UpdateProductStatusRequest,
+  ): Promise<BaseResponse<UpdateProductResponse>> {
+    const responseData = await this.productService.updateProductStatus(
+      updateProductRequest,
+    );
+
+    return new BaseResponse(responseData, HttpStatusCode.SUCCESS);
+  }
+
+  @Post(':id/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadImage(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<BaseResponse<BaseStatusResponse>> {
+    const responseData = await this.productService.uploadProductImage(id, file);
+
+    if (responseData.isSuccess)
+      return new BaseResponse(responseData, HttpStatusCode.SUCCESS);
+    else {
+      return new BaseResponse(responseData, HttpStatusCode.FAILED);
+    }
   }
 
   @Get(':id/related-products')
@@ -156,11 +253,11 @@ export class ProductController {
     return new BaseResponse(transformedProduct, HttpStatusCode.SUCCESS);
   }
 
-  @Get(':slug/details')
-  async findProductDetails(
-    @Param('slug') slug: string,
+  @Get('find-by-id/:id')
+  async getProductById(
+    @Param('id') id: string,
   ): Promise<BaseResponse<ResponseProductModel>> {
-    const product = await this.productService.findProductDetails(slug);
+    const product = await this.productService.findProductDetails(id);
 
     // Transform the products into the desired response format
     const transformedProduct: ResponseProductModel = {
@@ -177,10 +274,38 @@ export class ProductController {
       category: product?.category,
       unit: product.unit,
       tags: product.tags,
+      isBestSeller: product.isBestSeller,
+      isPopular: product.isPopular,
     };
 
     return new BaseResponse(transformedProduct, HttpStatusCode.SUCCESS);
   }
+
+  // @Get(':slug/details')
+  // async findProductDetails(
+  //   @Param('slug') slug: string,
+  // ): Promise<BaseResponse<ResponseProductModel>> {
+  //   const product = await this.productService.findProductDetails(slug);
+
+  //   // Transform the products into the desired response format
+  //   const transformedProduct: ResponseProductModel = {
+  //     id: product.id,
+  //     name: product.name,
+  //     slug: product.slug,
+  //     image: product.image,
+  //     description: product.description,
+  //     price: product.price,
+  //     quantity: product.quantity,
+  //     sold: product.sold,
+  //     salePrice: product.salePrice,
+  //     sku: product.sku,
+  //     category: product?.category,
+  //     unit: product.unit,
+  //     tags: product.tags,
+  //   };
+
+  //   return new BaseResponse(transformedProduct, HttpStatusCode.SUCCESS);
+  // }
 
   @Get('search')
   async searchProducts(

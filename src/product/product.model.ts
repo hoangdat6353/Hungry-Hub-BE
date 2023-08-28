@@ -29,6 +29,37 @@ export class CreateOrderRequest {
   deliveryTips: number;
 }
 
+export class CreateProductRequest {
+  name: string;
+  slug: string;
+  quantity: number;
+  price: number;
+  description: string;
+  unit: string;
+  isBestSeller: boolean;
+  isPopular: boolean;
+  categoryId: string;
+}
+
+export class UpdateProductRequest {
+  id: string;
+  name: string;
+  slug: string;
+  quantity: number;
+  price: number;
+  description: string;
+  unit: string;
+  isBestSeller: boolean;
+  isPopular: boolean;
+  categoryId: string;
+}
+
+export class UpdateProductStatusRequest {
+  id: string;
+  isPopular: boolean;
+  isBestSeller: boolean;
+}
+
 interface CreateOrderProductRequest {
   id: string;
   image: string;
@@ -55,6 +86,8 @@ export interface ResponseProductModel {
   category: Category;
   unit: string;
   tags: Tag[];
+  isBestSeller?: boolean;
+  isPopular?: boolean;
 }
 
 export class OrderItem {
@@ -74,4 +107,14 @@ export class CreateOrderResponse {
   shipping_fee: number;
   payment_gateway: string;
   delivery_notes: string;
+}
+
+export class CreateProductResponse {
+  id: string;
+  isSuccess: boolean;
+}
+
+export class UpdateProductResponse {
+  id: string;
+  isSuccess: boolean;
 }

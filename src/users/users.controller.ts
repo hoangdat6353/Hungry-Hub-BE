@@ -12,6 +12,7 @@ import {
   BaseStatusResponse,
   ChangePasswordRequest,
   CreateAddressRequest,
+  CreateContactRequest,
   GetAddressResponse,
   GetContactResponse,
   LoginRequest,
@@ -33,6 +34,13 @@ export class UserController {
     const users = await this.userService.findAll();
 
     return new BaseResponse(users, HttpStatusCode.SUCCESS);
+  }
+
+  @Get('employee')
+  async findAllEmployee(): Promise<BaseResponse<User[]>> {
+    const employee = await this.userService.findAllEmployee();
+
+    return new BaseResponse(employee, HttpStatusCode.SUCCESS);
   }
 
   //Find user by ID
@@ -84,6 +92,13 @@ export class UserController {
     );
 
     return new BaseResponse(contactResponseModel, HttpStatusCode.SUCCESS);
+  }
+
+  @Post('/contact')
+  public async createContact(
+    @Body() createContactRequest: CreateContactRequest,
+  ): Promise<BaseResponse<BaseStatusResponse>> {
+    return await this.userService.createUserContact(createContactRequest);
   }
 
   @Post('register')

@@ -12,6 +12,7 @@ import {
   BaseStatusResponse,
   ChangePasswordRequest,
   CreateAddressRequest,
+  CreateContactRequest,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
@@ -40,16 +41,16 @@ export class UsersService {
   ) {}
 
   async findAll(): Promise<User[]> {
-    return this.userRepository.find();
+    return this.userRepository.find({ where: { role: Role.user } });
+  }
+
+  async findAllEmployee(): Promise<User[]> {
+    return this.userRepository.find({ where: { role: Role.employee } });
   }
 
   async findOne(id: string): Promise<User> {
     //const user = await this.userRepository.findOne({ where: { id } });
 
-    console.log(
-      'USER HERE',
-      await this.userRepository.findOne({ where: { id } }),
-    );
     return this.userRepository.findOne({ where: { id } });
   }
 
@@ -84,6 +85,35 @@ export class UsersService {
 
       await this.addressRepository.save(newAddress);
       user.addresses = [...user.addresses, newAddress];
+      await this.userRepository.save(user);
+
+      return new BaseResponse<BaseStatusResponse>({ isSuccess: true });
+    } catch (error) {
+      throw new InternalServerErrorException('SERVER ERROR EXCEPTION');
+    }
+  }
+
+  async createUserContact(
+    createUserContact: CreateContactRequest,
+  ): Promise<BaseResponse<BaseStatusResponse>> {
+    try {
+      const userId = createUserContact.id;
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['contacts'],
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const newContact = new Contact();
+      newContact.default = false;
+      newContact.number = createUserContact.number;
+      newContact.title = createUserContact.title;
+
+      await this.contactRepository.save(newContact);
+      user.contacts = [...user.contacts, newContact];
       await this.userRepository.save(user);
 
       return new BaseResponse<BaseStatusResponse>({ isSuccess: true });
@@ -142,7 +172,6 @@ export class UsersService {
 
         user.addresses = [...user.addresses, userDefaultDeliveryAddress];
         await this.userRepository.save(user);
-        console.log('REACHED ADDRESS');
       }
 
       if (
@@ -160,10 +189,8 @@ export class UsersService {
 
         user.contacts = [...user.contacts, userDefaultContact];
         await this.userRepository.save(user);
-        console.log('REACHED CONTACT');
       }
 
-      console.log('DONT GO INTO CONTACT');
       // Update user entity
       user.address = address;
       user.firstName = firstName;
@@ -331,11 +358,26 @@ export class UsersService {
       const { id, email, role } = await this.tryLogin(loginRequest);
       const token = this.jwtService.sign({ email, role, id }, { subject: id });
 
-      return new BaseResponse<LoginResponse>({
-        token,
-        email,
-        role,
-      } as LoginResponse);
+      console.log('IS PORTAL:', loginRequest.isPortal);
+      if (loginRequest.isPortal) {
+        if (role === Role.admin || role === Role.employee) {
+          console.log('REACHED HERE - PORTAL');
+          return new BaseResponse<LoginResponse>({
+            token,
+            email,
+            role,
+          } as LoginResponse);
+        } else {
+          throw new UnauthorizedException('NO PERMISSION TO ACCESS PORTAL');
+        }
+      } else {
+        console.log('REACHED HERE - NORMAL');
+        return new BaseResponse<LoginResponse>({
+          token,
+          email,
+          role,
+        } as LoginResponse);
+      }
     } catch (error) {
       console.log('ERROR HERE:', error);
       throw new UnauthorizedException('UNAUTHORIZED_EXCEPTION');

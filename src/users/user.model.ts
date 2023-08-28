@@ -1,5 +1,6 @@
 import { Role } from 'src/libs/entities/user.entity';
 import {
+  IsBoolean,
   IsEmail,
   IsNotEmpty,
   IsString,
@@ -28,6 +29,9 @@ export class LoginRequest {
 
   @IsString()
   password: string;
+
+  @IsBoolean()
+  isPortal?: boolean;
 }
 
 export class UpdateUserRequest {
@@ -60,6 +64,13 @@ export class CreateAddressRequest {
   default: boolean;
   title: string;
   formatted_address: string;
+}
+
+export class CreateContactRequest {
+  id: string;
+  default: boolean;
+  title: string;
+  number: string;
 }
 
 export class GetAddressResponse {

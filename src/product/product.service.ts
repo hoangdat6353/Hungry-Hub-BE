@@ -13,12 +13,23 @@ import { Product } from 'src/libs/entities/product.entity';
 import {
   CreateOrderRequest,
   CreateOrderResponse,
+  CreateProductRequest,
+  CreateProductResponse,
   OrderItem,
+  UpdateProductRequest,
+  UpdateProductResponse,
+  UpdateProductStatusRequest,
 } from './product.model';
 import { User } from 'src/libs/entities/user.entity';
 import { Order } from 'src/libs/entities/order.entity';
 import { Status } from 'src/libs/entities/status.entity';
 import { isUUID } from 'class-validator';
+import { Category } from 'src/libs/entities/category.entity';
+import { BaseStatusResponse } from 'src/users/user.model';
+import { Attachment } from 'src/libs/entities/attachment.entity';
+import { Express } from 'multer';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { Tag } from 'src/libs/entities/tag.entity';
 
 @Injectable()
 export class ProductService {
@@ -31,6 +42,13 @@ export class ProductService {
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(Status)
     private readonly statusRepository: Repository<Status>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(Attachment)
+    private readonly attachmentRepository: Repository<Attachment>,
+    @InjectRepository(Tag)
+    private readonly tagRepository: Repository<Tag>,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async findAllProductIsBestSeller(): Promise<Product[]> {
@@ -139,10 +157,205 @@ export class ProductService {
     }
   }
 
+  async createProduct(
+    createProductRequest: CreateProductRequest,
+  ): Promise<CreateProductResponse> {
+    try {
+      const category = await this.categoryRepository.findOne({
+        where: {
+          id: createProductRequest.categoryId,
+        },
+      });
+
+      if (category == null)
+        throw new InternalServerErrorException('CATEGORY NOT FOUND');
+
+      const newProduct = new Product();
+      newProduct.category = category;
+      newProduct.name = createProductRequest.name;
+      newProduct.slug = createProductRequest.slug;
+      newProduct.quantity = createProductRequest.quantity;
+      newProduct.sold = 0;
+      newProduct.unit = createProductRequest.unit;
+      newProduct.price = createProductRequest.price;
+      newProduct.salePrice = createProductRequest.price;
+      newProduct.description = createProductRequest.description;
+      newProduct.isBestSeller = createProductRequest.isBestSeller;
+      newProduct.isPopular = createProductRequest.isPopular;
+
+      const product = await this.productRepository.save(newProduct);
+
+      const responseModel = new CreateProductResponse();
+      responseModel.id = product.id;
+      responseModel.isSuccess = true;
+
+      return responseModel;
+    } catch (error) {
+      console.log('ERROR:', error);
+      throw new InternalServerErrorException('SERVER ERROR EXCEPTION');
+    }
+  }
+
+  async updateProduct(
+    updateProductRequest: UpdateProductRequest,
+  ): Promise<UpdateProductResponse> {
+    try {
+      const category = await this.categoryRepository.findOne({
+        where: {
+          id: updateProductRequest.categoryId,
+        },
+      });
+
+      if (category == null)
+        throw new InternalServerErrorException('CATEGORY NOT FOUND');
+
+      const product = await this.productRepository.findOne({
+        where: {
+          id: updateProductRequest.id,
+        },
+      });
+
+      if (product == null)
+        throw new InternalServerErrorException('PRODUCT NOT FOUND !');
+
+      product.name = updateProductRequest.name;
+      product.slug = updateProductRequest.slug;
+      product.quantity = updateProductRequest.quantity;
+      product.price = updateProductRequest.price;
+      product.unit = updateProductRequest.unit;
+      product.description = updateProductRequest.description;
+      product.category = category;
+      product.isBestSeller = updateProductRequest.isBestSeller;
+      product.salePrice = updateProductRequest.price;
+      product.isPopular = updateProductRequest.isPopular;
+
+      const savedProduct = await this.productRepository.save(product);
+
+      if (savedProduct == null)
+        throw new InternalServerErrorException(
+          'SAVED PRODUCT TO DATABASE FAILED !',
+        );
+
+      const responseModel = new UpdateProductResponse();
+      responseModel.id = savedProduct.id;
+      responseModel.isSuccess = true;
+
+      return responseModel;
+    } catch (error) {
+      console.log('ERROR:', error);
+      throw new InternalServerErrorException('SERVER ERROR EXCEPTION');
+    }
+  }
+
+  async updateProductStatus(
+    updateProductRequest: UpdateProductStatusRequest,
+  ): Promise<UpdateProductResponse> {
+    try {
+      const product = await this.productRepository.findOne({
+        where: {
+          id: updateProductRequest.id,
+        },
+      });
+
+      if (product == null)
+        throw new InternalServerErrorException('PRODUCT NOT FOUND !');
+
+      product.isBestSeller = updateProductRequest.isBestSeller;
+      product.isPopular = updateProductRequest.isPopular;
+
+      const savedProduct = await this.productRepository.save(product);
+
+      if (savedProduct == null)
+        throw new InternalServerErrorException(
+          'SAVED PRODUCT TO DATABASE FAILED !',
+        );
+
+      const responseModel = new UpdateProductResponse();
+      responseModel.id = savedProduct.id;
+      responseModel.isSuccess = true;
+
+      return responseModel;
+    } catch (error) {
+      console.log('ERROR:', error);
+      throw new InternalServerErrorException('SERVER ERROR EXCEPTION');
+    }
+  }
+
+  async deleteProduct(productId: string): Promise<BaseStatusResponse> {
+    try {
+      const product = await this.productRepository.findOne({
+        where: {
+          id: productId,
+        },
+      });
+
+      if (product == null)
+        throw new InternalServerErrorException('KHÔNG TÌM THẤY MÓN ĂN !');
+
+      if (product.orders) {
+        throw new InternalServerErrorException(
+          'KHÔNG THỂ XÓA MÓN ĂN ĐANG CÓ ĐƠN HÀNG',
+        );
+      }
+
+      await this.productRepository.remove(product);
+
+      const responseModel = new BaseStatusResponse();
+      responseModel.isSuccess = true;
+
+      return responseModel;
+    } catch (error) {
+      console.log('ERROR:', error);
+      throw new InternalServerErrorException('SERVER ERROR EXCEPTION');
+    }
+  }
+
+  async uploadProductImage(
+    productId: string,
+    file: Express.Multer.File,
+  ): Promise<BaseStatusResponse> {
+    const product = await this.productRepository.findOne({
+      where: {
+        id: productId,
+      },
+    });
+
+    if (product == null)
+      throw new InternalServerErrorException('PRODUCT NOT FOUND !');
+
+    const uploadImageData = await this.cloudinaryService.uploadFile(file);
+
+    const attachment = new Attachment();
+    attachment.productImage = product;
+    attachment.original = uploadImageData.url;
+    attachment.thumbnail = uploadImageData.url;
+    attachment.categoryImage = null;
+
+    const savedAttachment = await this.attachmentRepository.save(attachment);
+    const response = new BaseStatusResponse();
+
+    if (savedAttachment) {
+      response.isSuccess = true;
+    } else {
+      response.isSuccess = false;
+    }
+
+    return response;
+  }
+
   async findAllOrdersFromUserId(userId: string): Promise<Order[]> {
     // Find all orders that belong to the user matching userId
     const orders = await this.orderRepository.find({
       where: { user: { id: userId } }, // Filter by userId column
+      relations: ['status', 'products', 'products.image'],
+    });
+
+    return orders;
+  }
+
+  async findAllOrders(): Promise<Order[]> {
+    // Find all orders that belong to the user matching userId
+    const orders = await this.orderRepository.find({
       relations: ['status', 'products', 'products.image'],
     });
 
@@ -201,16 +414,16 @@ export class ProductService {
     return relatedProducts;
   }
 
-  async findProductDetails(productSlug: string): Promise<Product> {
+  async findProductDetails(productId: string): Promise<Product> {
     const product = await this.productRepository.findOne({
       where: {
-        slug: productSlug,
+        id: productId,
       },
       relations: ['image', 'category', 'tags'],
     });
 
     if (!product) {
-      throw new Error(`Product with slug ${productSlug} not found`);
+      throw new Error(`Product with id ${productId} not found`);
     }
 
     return product;

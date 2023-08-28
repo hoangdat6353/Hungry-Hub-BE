@@ -22,11 +22,14 @@ export class Attachment {
 
   @OneToOne(() => Category, (category) => category.image, { nullable: true })
   @JoinColumn({ name: 'categoryId' })
-  categoryParent: Category;
+  categoryImage: Category;
 
-  @OneToOne(() => Product, (product) => product.image, { nullable: true })
+  @OneToOne(() => Product, (product) => product.image, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
-  productImage: Category;
+  productImage: Product;
 
   // @ManyToOne(() => Product, (product) => product.gallery, { nullable: true })
   // @JoinColumn()

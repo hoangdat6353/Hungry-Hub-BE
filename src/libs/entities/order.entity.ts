@@ -40,7 +40,7 @@ export class Order extends BaseEntity {
   @Column({ name: 'delivery_tips', default: 0 })
   deliveryTips: number;
 
-  @Column({ name: 'delivery_time' })
+  @Column({ name: 'delivery_time', nullable: true })
   deliveryTime: string;
 
   @Column({ name: 'delivery_date' })
