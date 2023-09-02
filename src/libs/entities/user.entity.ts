@@ -11,6 +11,13 @@ export enum Role {
   user = 'user',
 }
 
+export enum Position {
+  CASHIER = 'THU NGÂN',
+  KITCHEN = 'BẾP',
+  BARTENDER = 'PHA CHẾ',
+  DELIVERY = 'GIAO HÀNG',
+}
+
 export const ADMINISTRATOR_ROLES = [Role.admin, Role.employee];
 
 @Entity()
@@ -60,9 +67,8 @@ export class User extends AuditableEntity {
   @Column({ default: true })
   status: boolean;
 
-  @Exclude()
-  @Column({ name: 'reset_password_token', nullable: true })
-  resetPasswordToken: string;
+  @Column({ name: 'employee_password', nullable: true })
+  employeePassword: string;
 
   @Column({ nullable: true, type: 'timestamptz' })
   lastLoggedInAt: Date;
@@ -77,14 +83,16 @@ export class User extends AuditableEntity {
 
   @OneToMany(() => Address, (address) => address.user, {
     nullable: true,
+    onDelete: 'CASCADE',
   })
   addresses: Address[];
 
   @OneToMany(() => Contact, (contact) => contact.user, {
     nullable: true,
+    onDelete: 'CASCADE',
   })
   contacts: Contact[];
 
-  @OneToMany(() => Order, (order) => order.user)
+  @OneToMany(() => Order, (order) => order.user, { onDelete: 'CASCADE' })
   orders: Order[];
 }

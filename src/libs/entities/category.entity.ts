@@ -25,6 +25,7 @@ export class Category extends BaseEntity {
 
   @OneToOne(() => Attachment, (image) => image.categoryImage, {
     nullable: true,
+    onDelete: 'CASCADE',
   })
   image: Attachment;
 

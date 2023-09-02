@@ -60,6 +60,16 @@ export class UpdateProductStatusRequest {
   isBestSeller: boolean;
 }
 
+export interface UpdateOrderStatusRequest {
+  id: string;
+  statusId: string;
+}
+
+export class UpdateOrderStatusResponse {
+  id: string;
+  isSuccess: boolean;
+}
+
 interface CreateOrderProductRequest {
   id: string;
   image: string;

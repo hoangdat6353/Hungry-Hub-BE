@@ -22,11 +22,11 @@ export class Contact extends BaseEntity {
   @Column()
   number: string;
 
-  @ManyToOne(() => User, (user) => user.contacts)
+  @ManyToOne(() => User, (user) => user.contacts, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => Order, (order) => order.contacts)
+  @ManyToOne(() => Order, (order) => order.contacts, { onDelete: 'CASCADE' })
   @JoinColumn()
   order: Order;
 }

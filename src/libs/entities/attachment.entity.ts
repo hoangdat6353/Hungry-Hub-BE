@@ -20,7 +20,10 @@ export class Attachment {
   @Column()
   original: string;
 
-  @OneToOne(() => Category, (category) => category.image, { nullable: true })
+  @OneToOne(() => Category, (category) => category.image, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'categoryId' })
   categoryImage: Category;
 

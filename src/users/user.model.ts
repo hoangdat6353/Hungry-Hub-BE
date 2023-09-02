@@ -14,6 +14,46 @@ export class RegisterRequest {
   password: string;
 }
 
+export interface CreateEmployeeRequest {
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  dateHired: string;
+  nationalID: string;
+  position: string;
+  phone: string;
+  address: string;
+  email: string;
+}
+
+export interface UpdateEmployeeRequest {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  dateHired: string;
+  nationalID: string;
+  position: string;
+  phone: string;
+  address: string;
+  email: string;
+}
+
+export class UpdateEmployeeResponse {
+  id: string;
+  isSuccess: boolean;
+}
+
+export interface UpdateUserStatusRequest {
+  id: string;
+  status: boolean;
+}
+
+export class UpdateUserStatusResponse {
+  id: string;
+  isSuccess: boolean;
+}
+
 export class TokensResponse {
   token: string;
 }
@@ -40,8 +80,6 @@ export class UpdateUserRequest {
   address: string;
   phoneNumber: string;
   email: string;
-  password: string;
-  confirmPassword: string;
 }
 
 export class BaseStatusResponse {

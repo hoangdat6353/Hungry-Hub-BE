@@ -14,7 +14,7 @@ export class Address extends BaseEntity {
   @Column({ name: 'formartted_address' })
   formattedAddress: string;
 
-  @ManyToOne(() => User, (user) => user.contacts)
+  @ManyToOne(() => User, (user) => user.contacts, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 }

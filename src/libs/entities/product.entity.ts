@@ -75,7 +75,7 @@ export class Product extends BaseEntity {
   @JoinTable({ name: 'products_tags' })
   tags: Tag[];
 
-  @ManyToMany(() => Order, (order) => order.products)
+  @ManyToMany(() => Order, (order) => order.products, { onDelete: 'CASCADE' })
   @JoinTable({ name: 'products_orders' })
   orders: Order[];
 }

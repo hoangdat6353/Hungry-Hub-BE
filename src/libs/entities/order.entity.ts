@@ -52,17 +52,19 @@ export class Order extends BaseEntity {
   @Column({ name: 'shipping_address' })
   shippingAddress: string;
 
-  @ManyToMany(() => Product, (product) => product.orders)
+  @ManyToMany(() => Product, (product) => product.orders, {
+    onDelete: 'CASCADE',
+  })
   products: Product[];
 
-  @ManyToOne(() => User, (user) => user.orders)
+  @ManyToOne(() => User, (user) => user.orders, { onDelete: 'CASCADE' })
   user: User;
 
-  @OneToMany(() => Contact, (contact) => contact.order)
+  @OneToMany(() => Contact, (contact) => contact.order, { onDelete: 'CASCADE' })
   @JoinColumn()
   contacts: Contact[];
 
-  @ManyToOne(() => Status, (status) => status.orders) // Define the relationship with Status entity
-  @JoinColumn({ name: 'status_id' }) // Column name in the Order table to store the status ID
+  @ManyToOne(() => Status, (status) => status.orders, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'status_id' })
   status: Status;
 }

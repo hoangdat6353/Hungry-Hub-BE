@@ -16,6 +16,8 @@ import {
   CreateProductRequest,
   CreateProductResponse,
   OrderItem,
+  UpdateOrderStatusRequest,
+  UpdateOrderStatusResponse,
   UpdateProductRequest,
   UpdateProductResponse,
   UpdateProductStatusRequest,
@@ -91,7 +93,7 @@ export class ProductService {
       );
 
       const orderStatus: Status = await this.statusRepository.findOne({
-        where: { id: '3f3dc886-bc8a-4e49-b987-28f76cb92124' },
+        where: { id: '539a1a77-1b79-4a19-a504-6bea49ede32a' },
       });
 
       const productIds = createOrderRequest.products.map(
@@ -135,7 +137,9 @@ export class ProductService {
             id: product.id,
             name: product.name,
             price: product.price,
-            quantity: product.quantity,
+            quantity: createOrderRequest.products.find(
+              (orderProduct) => orderProduct.id === product.id,
+            ).itemTotal,
           };
           return orderItem;
         },
@@ -281,6 +285,48 @@ export class ProductService {
     }
   }
 
+  async updateOrderStatus(
+    updateOrderStatusRequest: UpdateOrderStatusRequest,
+  ): Promise<UpdateOrderStatusResponse> {
+    try {
+      const order = await this.orderRepository.findOne({
+        where: {
+          id: updateOrderStatusRequest.id,
+        },
+      });
+
+      if (order == null)
+        throw new InternalServerErrorException('Không tìm thấy đơn hàng !');
+
+      const status = await this.statusRepository.findOne({
+        where: {
+          id: updateOrderStatusRequest.statusId,
+        },
+      });
+
+      if (status == null)
+        throw new InternalServerErrorException('Không tìm thấy trạng thái !');
+
+      order.status = status;
+
+      const savedorder = await this.orderRepository.save(order);
+
+      if (savedorder == null)
+        throw new InternalServerErrorException(
+          'Lưu thông tin đơn hàng xuống database thất bại!',
+        );
+
+      const responseModel = new UpdateOrderStatusResponse();
+      responseModel.id = savedorder.id;
+      responseModel.isSuccess = true;
+
+      return responseModel;
+    } catch (error) {
+      console.log('ERROR:', error);
+      throw new InternalServerErrorException('SERVER ERROR EXCEPTION');
+    }
+  }
+
   async deleteProduct(productId: string): Promise<BaseStatusResponse> {
     try {
       const product = await this.productRepository.findOne({
@@ -299,6 +345,36 @@ export class ProductService {
       }
 
       await this.productRepository.remove(product);
+
+      const responseModel = new BaseStatusResponse();
+      responseModel.isSuccess = true;
+
+      return responseModel;
+    } catch (error) {
+      console.log('ERROR:', error);
+      throw new InternalServerErrorException('SERVER ERROR EXCEPTION');
+    }
+  }
+
+  async deleteOrder(orderId: string): Promise<BaseStatusResponse> {
+    try {
+      const order = await this.orderRepository.findOne({
+        where: {
+          id: orderId,
+        },
+        relations: ['status', 'products', 'user', 'contacts'],
+      });
+
+      if (order == null)
+        throw new InternalServerErrorException('KHÔNG TÌM THẤY MÓN ĂN !');
+
+      if (order.status.serial !== 1) {
+        throw new InternalServerErrorException(
+          'KHÔNG THỂ HỦY ĐƠN HÀNG ĐÃ ĐƯỢC TIẾP NHẬN BỞI QUÁN',
+        );
+      }
+
+      await this.orderRepository.remove(order);
 
       const responseModel = new BaseStatusResponse();
       responseModel.isSuccess = true;
@@ -346,11 +422,21 @@ export class ProductService {
   async findAllOrdersFromUserId(userId: string): Promise<Order[]> {
     // Find all orders that belong to the user matching userId
     const orders = await this.orderRepository.find({
-      where: { user: { id: userId } }, // Filter by userId column
+      where: { user: { id: userId } },
       relations: ['status', 'products', 'products.image'],
     });
 
     return orders;
+  }
+
+  async findOrderById(orderId: string): Promise<Order> {
+    // Find all orders that belong to the user matching userId
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+      relations: ['status', 'products', 'products.image'],
+    });
+
+    return order;
   }
 
   async findAllOrders(): Promise<Order[]> {

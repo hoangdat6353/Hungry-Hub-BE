@@ -21,7 +21,10 @@ import {
   CreateOrderResponse,
   CreateProductRequest,
   CreateProductResponse,
+  OrderItem,
   ResponseProductModel,
+  UpdateOrderStatusRequest,
+  UpdateOrderStatusResponse,
   UpdateProductRequest,
   UpdateProductResponse,
   UpdateProductStatusRequest,
@@ -30,6 +33,7 @@ import { Product } from 'src/libs/entities/product.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'multer';
 import { BaseStatusResponse } from 'src/users/user.model';
+import { Order } from 'src/libs/entities/order.entity';
 
 @Controller('products')
 export class ProductController {
@@ -119,6 +123,36 @@ export class ProductController {
     return new BaseResponse(transformedOrders, HttpStatusCode.SUCCESS);
   }
 
+  @Get('order/:id')
+  async getOrderById(@Param('id') id: string): Promise<BaseResponse<any>> {
+    const order = await this.productService.findOrderById(id);
+
+    // Transform orders data and return the response
+    const transformedOrders = {
+      id: order.id,
+      tracking_number: order.tracking_number,
+      amount: order.total - order.discount,
+      total: order.total,
+      delivery_fee: order.shippingFee,
+      discount: order.discount,
+      status: order.status,
+      delivery_time: order.deliveryTime,
+      created_at: order.createdAt,
+      products: order.products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        quantity: product.quantity,
+        price: product.price,
+        image: product.image,
+      })),
+      shipping_address: {
+        shipping_address: order.shippingAddress,
+      },
+    };
+
+    return new BaseResponse(transformedOrders, HttpStatusCode.SUCCESS);
+  }
+
   @Get('orders')
   async getAllOrders(): Promise<BaseResponse<any[]>> {
     const orders = await this.productService.findAllOrders();
@@ -189,6 +223,16 @@ export class ProductController {
     return new BaseResponse(responseData, HttpStatusCode.SUCCESS);
   }
 
+  @Delete('order/:id')
+  async deleteOrder(
+    @Param('id') id: string,
+  ): Promise<BaseResponse<BaseStatusResponse>> {
+    console.log('ID HERE:' + id);
+    const responseData = await this.productService.deleteOrder(id);
+
+    return new BaseResponse(responseData, HttpStatusCode.SUCCESS);
+  }
+
   @Delete(':id')
   async deleteProduct(
     @Param('id') id: string,
@@ -204,6 +248,17 @@ export class ProductController {
   ): Promise<BaseResponse<UpdateProductResponse>> {
     const responseData = await this.productService.updateProductStatus(
       updateProductRequest,
+    );
+
+    return new BaseResponse(responseData, HttpStatusCode.SUCCESS);
+  }
+
+  @Put('orders/order-status')
+  async updateOrderStatus(
+    @Body() updateOrderStatusRequest: UpdateOrderStatusRequest,
+  ): Promise<BaseResponse<UpdateOrderStatusResponse>> {
+    const responseData = await this.productService.updateOrderStatus(
+      updateOrderStatusRequest,
     );
 
     return new BaseResponse(responseData, HttpStatusCode.SUCCESS);

@@ -20,3 +20,24 @@ class CategoryChildren {
   name: string;
   slug: string;
 }
+
+export class CreateCategoryRequest {
+  name: string;
+  slug: string;
+}
+
+export class CreateCategoryResponse {
+  id: string;
+  isSuccess: boolean;
+}
+
+export class UpdateCategoryRequest {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export class UpdateCategoryResponse {
+  id: string;
+  isSuccess: boolean;
+}

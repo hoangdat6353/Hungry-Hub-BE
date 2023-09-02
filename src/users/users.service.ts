@@ -13,10 +13,15 @@ import {
   ChangePasswordRequest,
   CreateAddressRequest,
   CreateContactRequest,
+  CreateEmployeeRequest,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
+  UpdateEmployeeRequest,
+  UpdateEmployeeResponse,
   UpdateUserRequest,
+  UpdateUserStatusRequest,
+  UpdateUserStatusResponse,
 } from './user.model';
 import { Role, User } from 'src/libs/entities/user.entity';
 import * as bcrypt from 'bcrypt';
@@ -26,6 +31,7 @@ import { Address } from 'src/libs/entities/address.entity';
 import { Contact } from 'src/libs/entities/contact.entity';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { SendgridService } from 'src/sendgrid/sendgrid.service';
+import { HttpStatusCode } from 'src/core/enum/HttpStatusCode';
 
 @Injectable()
 export class UsersService {
@@ -137,20 +143,9 @@ export class UsersService {
     updateUserRequest: UpdateUserRequest,
     id: string,
   ): Promise<BaseResponse<BaseStatusResponse>> {
-    const {
-      firstName,
-      lastName,
-      email,
-      password,
-      confirmPassword,
-      phoneNumber,
-      address,
-    } = updateUserRequest;
+    const { firstName, lastName, email, phoneNumber, address } =
+      updateUserRequest;
     let isSuccess = false;
-
-    if (confirmPassword !== password) {
-      throw new NotFoundException('PASSWORD NOT MATCH!');
-    }
 
     const user = await this.tryFindUserById(id);
 
@@ -159,8 +154,6 @@ export class UsersService {
     }
 
     try {
-      const hashedPassword = await bcrypt.hash(password, 10);
-
       if (user.addresses.length == 0 && address != null && address != '') {
         const userDefaultDeliveryAddress = new Address();
         userDefaultDeliveryAddress.default = true;
@@ -197,8 +190,6 @@ export class UsersService {
       user.lastName = lastName;
       user.phone = phoneNumber;
       user.email = email;
-      user.passwordHash = hashedPassword;
-
       await this.userRepository.save(user);
 
       isSuccess = true;
@@ -212,8 +203,33 @@ export class UsersService {
     }
   }
 
-  async remove(id: number): Promise<void> {
-    await this.userRepository.delete(id);
+  async remove(userId: string): Promise<BaseStatusResponse> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: {
+          id: userId,
+        },
+      });
+
+      if (user == null)
+        throw new InternalServerErrorException('KHÔNG TÌM THẤY NGƯỜI DÙNG !');
+
+      if (user.orders) {
+        throw new InternalServerErrorException(
+          'KHÔNG THỂ XÓA TÀI KHOẢN ĐANG CÓ ĐƠN HÀNG',
+        );
+      }
+
+      await this.userRepository.remove(user);
+
+      const responseModel = new BaseStatusResponse();
+      responseModel.isSuccess = true;
+
+      return responseModel;
+    } catch (error) {
+      console.log('ERROR:', error);
+      throw new InternalServerErrorException('SERVER ERROR EXCEPTION');
+    }
   }
 
   async changePassword(
@@ -272,8 +288,22 @@ export class UsersService {
       const mailToSend = {
         to: email, // Change to your recipient
         from: 'hungryhub.food@gmail.com', // Change to your verified sender
-        subject: 'New Password for Hungry',
-        html: `<strong>Here is your new password, remember to change it: <b>${randomPassword}</b></strong>`,
+        subject: '[HungryHub] New Password Information',
+        html: `<p><strong>Ch&agrave;o</strong> ${user.username},&nbsp;</p>
+
+        <p>Ch&uacute;ng t&ocirc;i đ&atilde; nhận được y&ecirc;u cầu đặt lại mật khẩu cho t&agrave;i khoản của bạn tr&ecirc;n nền tảng đặt m&oacute;n ăn trực tuyến của ch&uacute;ng t&ocirc;i. Dưới đ&acirc;y l&agrave; mật khẩu mới cho t&agrave;i khoản của bạn:&nbsp;</p>
+        
+        <p><strong>Mật khẩu mới:</strong> ${randomPassword}&nbsp;</p>
+        
+        <p>Vui l&ograve;ng đăng nhập bằng mật khẩu mới n&agrave;y v&agrave; sau đ&oacute; bạn c&oacute; thể thay đổi mật khẩu theo mong muốn từ phần c&agrave;i đặt t&agrave;i khoản. <strong>Ch&uacute;ng t&ocirc;i khuyến nghị bạn đổi mật khẩu ngay sau khi đăng nhập để đảm bảo an to&agrave;n cho t&agrave;i khoản của m&igrave;nh.&nbsp;</strong></p>
+        
+        <p>Xin cảm ơn v&agrave; ch&uacute;c bạn c&oacute; trải nghiệm tốt tr&ecirc;n nền tảng của ch&uacute;ng t&ocirc;i.&nbsp;</p>
+        
+        <p><strong>Tr&acirc;n trọng,&nbsp;</strong></p>
+        
+        <p><span style="font-size:8px"><img src="https://richtexteditor.com/imageuploads/638288136634148811-ca529b6e-529a-4ee8-a027-54552336d9e4.png" width="118px" height="27px" /></span></p>
+        
+        <p>&nbsp;</p>`,
       };
       await this.sendgridService.sendMail(mailToSend);
     } catch (error) {
@@ -348,6 +378,120 @@ export class UsersService {
       }
     } catch (error) {
       throw new UnauthorizedException('UNAUTHORIZED_EXCEPTION');
+    }
+  }
+
+  async createEmployee(
+    createEmployeeRequest: CreateEmployeeRequest,
+  ): Promise<BaseResponse<BaseStatusResponse>> {
+    const randomPassword = this.generateRandomId(8);
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+    const user = new User();
+    user.employeePassword = randomPassword;
+    user.username =
+      createEmployeeRequest.firstName + ' ' + createEmployeeRequest.lastName;
+    user.firstName = createEmployeeRequest.firstName;
+    user.lastName = createEmployeeRequest.lastName;
+    user.address = createEmployeeRequest.address;
+    user.email = createEmployeeRequest.email;
+    user.dateOfBirth = createEmployeeRequest.dateOfBirth;
+    user.dateHired = createEmployeeRequest.dateHired;
+    user.nationalID = createEmployeeRequest.nationalID;
+    user.phone = createEmployeeRequest.phone;
+    user.position = createEmployeeRequest.position;
+    user.passwordHash = hashedPassword;
+    user.role = Role.employee;
+
+    try {
+      const newUser = await this.userRepository.save(user);
+
+      if (newUser != null) {
+        const responseModel = new BaseStatusResponse();
+        responseModel.isSuccess = true;
+
+        return new BaseResponse(responseModel, HttpStatusCode.SUCCESS);
+      } else {
+        throw new NotFoundException('SAVE USER FAILED!');
+      }
+    } catch (error) {
+      throw new UnauthorizedException('UNAUTHORIZED_EXCEPTION');
+    }
+  }
+
+  async updateEmployee(
+    updateEmployeeRequest: UpdateEmployeeRequest,
+  ): Promise<UpdateEmployeeResponse> {
+    try {
+      const employee = await this.userRepository.findOne({
+        where: {
+          id: updateEmployeeRequest.id,
+        },
+      });
+
+      if (employee == null)
+        throw new InternalServerErrorException('KHÔNG TÌM THẤY NHÂN VIÊN');
+
+      employee.firstName = updateEmployeeRequest.firstName;
+      employee.lastName = updateEmployeeRequest.lastName;
+      employee.address = updateEmployeeRequest.address;
+      employee.email = updateEmployeeRequest.email;
+      employee.dateOfBirth = updateEmployeeRequest.dateOfBirth;
+      employee.dateHired = updateEmployeeRequest.dateHired;
+      employee.nationalID = updateEmployeeRequest.nationalID;
+      employee.phone = updateEmployeeRequest.phone;
+      employee.position = updateEmployeeRequest.position;
+
+      const updatedEmployee = await this.userRepository.save(employee);
+
+      if (updatedEmployee == null)
+        throw new InternalServerErrorException(
+          'GẶP LỖI TRONG QUÁ TRÌNH LƯU NHÂN VIÊN XUỐNG CSDL !',
+        );
+
+      const responseModel = new UpdateEmployeeResponse();
+      responseModel.id = updatedEmployee.id;
+      responseModel.isSuccess = true;
+
+      return responseModel;
+    } catch (error) {
+      console.log('ERROR:', error);
+      throw new InternalServerErrorException('SERVER ERROR EXCEPTION');
+    }
+  }
+
+  async updateUserStatus(
+    updateUserStatus: UpdateUserStatusRequest,
+  ): Promise<UpdateUserStatusResponse> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: {
+          id: updateUserStatus.id,
+        },
+      });
+
+      if (user == null)
+        throw new InternalServerErrorException('KHÔNG TÌM THẤY NGƯỜI DÙNG !');
+
+      user.status = updateUserStatus.status;
+
+      const savedUser = await this.userRepository.save(user);
+
+      if (savedUser == null)
+        throw new InternalServerErrorException(
+          'LƯU THÔNG TIN NGƯỜI DÙNG XUỐNG DATABASE THẤT BẠI !',
+        );
+
+      const responseModel = new UpdateUserStatusResponse();
+      responseModel.id = savedUser.id;
+      responseModel.isSuccess = true;
+
+      return responseModel;
+    } catch (error) {
+      console.log('ERROR:', error);
+      throw new InternalServerErrorException('SERVER ERROR EXCEPTION');
     }
   }
 

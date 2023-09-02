@@ -13,12 +13,17 @@ import {
   ChangePasswordRequest,
   CreateAddressRequest,
   CreateContactRequest,
+  CreateEmployeeRequest,
   GetAddressResponse,
   GetContactResponse,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
+  UpdateEmployeeRequest,
+  UpdateEmployeeResponse,
   UpdateUserRequest,
+  UpdateUserStatusRequest,
+  UpdateUserStatusResponse,
 } from './user.model';
 import { User } from 'src/libs/entities/user.entity';
 import { BaseResponse } from 'src/libs/entities/base.entity';
@@ -117,8 +122,12 @@ export class UserController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: number): Promise<void> {
-    return this.userService.remove(id);
+  async deleteUser(
+    @Param('id') id: string,
+  ): Promise<BaseResponse<BaseStatusResponse>> {
+    const responseData = await this.userService.remove(id);
+
+    return new BaseResponse(responseData, HttpStatusCode.SUCCESS);
   }
 
   @Post('login')
@@ -141,5 +150,34 @@ export class UserController {
     @Body('email') email: string,
   ): Promise<BaseResponse<BaseStatusResponse>> {
     return await this.userService.forgotPassword(email);
+  }
+
+  @Post('employee')
+  async createEmployee(
+    @Body() createEmployeeRequest: CreateEmployeeRequest,
+  ): Promise<BaseResponse<BaseStatusResponse>> {
+    return this.userService.createEmployee(createEmployeeRequest);
+  }
+
+  @Put('employee/update-employee')
+  async updateEmployee(
+    @Body() updateEmployeeRequest: UpdateEmployeeRequest,
+  ): Promise<BaseResponse<UpdateEmployeeResponse>> {
+    const responseData = await this.userService.updateEmployee(
+      updateEmployeeRequest,
+    );
+
+    return new BaseResponse(responseData, HttpStatusCode.SUCCESS);
+  }
+
+  @Put('update/user-status')
+  async updateUserStatus(
+    @Body() updateUserStatusRequest: UpdateUserStatusRequest,
+  ): Promise<BaseResponse<UpdateUserStatusResponse>> {
+    const responseData = await this.userService.updateUserStatus(
+      updateUserStatusRequest,
+    );
+
+    return new BaseResponse(responseData, HttpStatusCode.SUCCESS);
   }
 }
