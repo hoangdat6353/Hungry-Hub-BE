@@ -292,7 +292,6 @@ export class ProductController {
         name: product.name,
         slug: product.slug,
         image: product.image,
-        //gallery: product.gallery,
         description: product.description,
         price: product.price,
         quantity: product.quantity,

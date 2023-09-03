@@ -502,10 +502,8 @@ export class UsersService {
       const { id, email, role } = await this.tryLogin(loginRequest);
       const token = this.jwtService.sign({ email, role, id }, { subject: id });
 
-      console.log('IS PORTAL:', loginRequest.isPortal);
       if (loginRequest.isPortal) {
         if (role === Role.admin || role === Role.employee) {
-          console.log('REACHED HERE - PORTAL');
           return new BaseResponse<LoginResponse>({
             token,
             email,
@@ -515,7 +513,6 @@ export class UsersService {
           throw new UnauthorizedException('NO PERMISSION TO ACCESS PORTAL');
         }
       } else {
-        console.log('REACHED HERE - NORMAL');
         return new BaseResponse<LoginResponse>({
           token,
           email,
@@ -542,11 +539,7 @@ export class UsersService {
       throw new NotFoundException('USER NOT FOUND');
     }
 
-    console.log('EMAIL WHEN LOGIN HERE:', email);
-    console.log('PASSWORD WHEN LOGIN HERE:', password);
-
     const isValid = await bcrypt.compare(password, user.passwordHash);
-    console.log('IS VALID HERE:', isValid);
 
     if (!isValid) {
       throw new UnauthorizedException('UNAUTHORIZED !');
@@ -557,7 +550,6 @@ export class UsersService {
 
   private async tryFindUserById(id: string): Promise<User> {
     // Get user with features loaded eagerly
-    console.log('USER ID HERE:' + id);
     const user: User = await this.getUserById(id);
     if (!user) {
       throw new NotFoundException('USER NOT FOUND');

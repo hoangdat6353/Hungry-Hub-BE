@@ -464,7 +464,7 @@ export class ProductService {
         where: {
           id: productId,
         },
-        relations: ['tags'],
+        relations: ['tags', 'image', 'category'],
       });
     } else {
       // If the input is not a valid UUID, look up by slug
@@ -472,7 +472,7 @@ export class ProductService {
         where: {
           slug: productId,
         },
-        relations: ['tags'],
+        relations: ['tags', 'image', 'category'],
       });
     }
 
@@ -482,20 +482,13 @@ export class ProductService {
 
     const tagIds = product.tags.map((tag) => tag.id);
 
-    const relatedProductIds = await this.productRepository
+    const relatedProducts = await this.productRepository
       .createQueryBuilder('product')
-      .select('product.id')
-      .leftJoin('product.tags', 'tag')
-      .whereInIds(tagIds)
+      .innerJoinAndSelect('product.tags', 'tags')
+      .innerJoinAndSelect('product.image', 'image')
+      .where('tags.id IN (:...tagIds)', { tagIds })
       .andWhere('product.id != :productId', { productId: product.id })
       .getMany();
-
-    const relatedProducts = await this.productRepository.find({
-      where: {
-        id: In(relatedProductIds.map((p) => p.id)), // Use the retrieved IDs
-      },
-      relations: ['tags'],
-    });
 
     return relatedProducts;
   }
